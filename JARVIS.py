@@ -268,4 +268,4 @@ async def calendar(ctx):
 #     await ctx.send('Here is the link to our attendance spreadsheet: ', embed=sheet_link)
 
 # Run the bot
-bot.run('ODA2NzM4NDY5MDM2NDkwNzYz.YBtzvw.mcvXcsVtG9XGUXw1ryzlWTIiIw8')
+bot.run("BOT_TOKEN")
