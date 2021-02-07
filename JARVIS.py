@@ -120,7 +120,7 @@ async def check_mentions():
         except (IndexError, KeyError) as e:
             mentions = ""
         channel = bot.get_channel(REMIND_CHANNEL_ID)
-        event_link = discord.Embed(title="Event Link", url=f"{event.get('htmlLink')}", description="This link will take you to the event on the google calendar.", color=COLOUR)
+        event_link = discord.Embed(title=f"{event['summary']} Event Link", url=f"{event.get('htmlLink')}", description=f"This link will take you to the {event['summary']} event on the google calendar.", color=COLOUR)
         if start == now:
             await channel.send(mentions + f"{event['summary']} event is happenning now!")
             await channel.send(embed=event_link)
@@ -180,7 +180,7 @@ async def schedule(ctx, mentions: str, start_date: str, start_time: str, end_dat
         }
     }
     entry = cal_serv.events().insert(calendarId=CAL_ID, body=entry).execute()
-    event_link = discord.Embed(title="Event Link", url=f"{entry.get('htmlLink')}", description="This link will take you to the event on the google calendar.", color=COLOUR)
+    event_link = discord.Embed(title=f"{event} Event Link", url=f"{event.get('htmlLink')}", description=f"This link will take you to the {event} event on the google calendar.", color=COLOUR)
     await ctx.send(f'Event "{event}" on {readable(start_date_time)} created!')
     await ctx.send(embed=event_link)
 
@@ -196,7 +196,7 @@ async def details(ctx, event: str):
         if cal_event['summary'] == event:
             found = True
             start = cal_event['start'].get('dateTime', cal_event['start'].get('date'))
-            event_link = discord.Embed(title="Event Link", url=f"{cal_event.get('htmlLink')}", description="This link will take you to the event on the google calendar.", color=COLOUR)
+            event_link = discord.Embed(title=f"{cal_event['summary']} Event Link", url=f"{event.get('htmlLink')}", description=f"This link will take you to the {cal_event['summary']} event on the google calendar.", color=COLOUR)
             await ctx.send(readable(start))
             await ctx.send(cal_event['summary'])
             await ctx.send(cal_event['description'])
