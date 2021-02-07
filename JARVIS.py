@@ -19,11 +19,12 @@ CAL_URL = "https://calendar.google.com/calendar/u/0/r?cid=classroom1061574015485
 SHEET_URL = "https://docs.google.com/spreadsheets/d/1-nEtC8HnvX7G0NmsH2oryyVo8cVW7PfgQtfcOvlQMLE/edit?usp=sharing"
 SHEET_RANGE = "Sheet1!A1:C10000"
 TZ = pytz.timezone('US/Eastern')
-CHECK_TIME = datetime.time(9, 0)
+CHECK_TIME = datetime.time(8, 30)
 GUILD_ID = 767850070229647401
 REMIND_CHANNEL_ID = 806741602457485362
-DAY = datetime.timedelta(days=1)
+DAY = 1
 HOUR = datetime.timedelta(hours=1)
+COLOUR = 0x0d1d45
 
 # Variables
 creds = None
@@ -48,7 +49,7 @@ cal_serv = build('calendar', 'v3', credentials=creds)
 sheet_serv = build('sheets', 'v4', credentials=creds)
 
 # Discord Bot Steup
-description = '''Just A Rather Very Intelligent Discord Scheduling Bot built for FRC Team 5032, J.A.R.V.I.S. is at your cal_serv.'''
+description = '''Just A Rather Very Intelligent Discord Scheduling Bot built for FRC Team 5032, J.A.R.V.I.S. is at your service.'''
 intents = discord.Intents.default()
 intents.members = True
 help_command = commands.DefaultHelpCommand(no_category = 'Commands')
@@ -106,12 +107,12 @@ async def on_ready():
 # Checks time between now and the next 10 events every minute to produce reminders for events
 @tasks.loop(seconds=60)
 async def check_mentions():
-    utcnow = datetime.datetime.utcnow().isoformat() + "Z"
-    events_ls = cal_serv.events().list(calendarId=CAL_ID, timeMin=utcnow, singleEvents=True, maxResults=10, orderBy='startTime').execute()
+    utc_now = datetime.datetime.utcnow().isoformat() + "Z"
+    events_ls = cal_serv.events().list(calendarId=CAL_ID, timeMin=utc_now, singleEvents=True, maxResults=10, orderBy='startTime').execute()
     for event in events_ls['items']:
-        start = event['start'].get('dateTime', event['start'].get('date'))
-        start = readable(start)
-        now = readable(utcnow)
+        utc_start = event['start'].get('dateTime', event['start'].get('date'))
+        start = readable(utc_start)
+        now = readable(utc_now)
         start = datetime.datetime.strptime(start, '%Y-%m-%d %I:%M %p')
         now = datetime.datetime.strptime(now, '%Y-%m-%d %I:%M %p')
         try:
@@ -119,15 +120,15 @@ async def check_mentions():
         except (IndexError, KeyError) as e:
             mentions = ""
         channel = bot.get_channel(REMIND_CHANNEL_ID)
-        event_link = discord.Embed(title="Event Link", url=f"{event.get('htmlLink')}", description="This link will take you to the event on the google calendar.", color=0x5894bf)
+        event_link = discord.Embed(title="Event Link", url=f"{event.get('htmlLink')}", description="This link will take you to the event on the google calendar.", color=COLOUR)
         if start == now:
             await channel.send(mentions + f"{event['summary']} event is happenning now!")
             await channel.send(embed=event_link)
         elif (start - now) == HOUR:
-            await channel.send(mentions + f"{event['summary']} event is in an hour")
+            await channel.send(mentions + f"{event['summary']} event is in an hour.")
             await channel.send(embed=event_link)
-        elif (start - now) == DAY and datetime.datetime.now(tz=TZ).time().replace(second=0, microsecond=0) == CHECK_TIME:
-            await channel.send(f"{event['summary']} event is in a day")
+        elif (start - now).days == DAY and datetime.datetime.now(tz=TZ).time().replace(second=0, microsecond=0) == CHECK_TIME:
+            await channel.send(f"{event['summary']} event is tomorrow at {readable(utc_start)}.")
             await channel.send(embed=event_link)
 
 # Takes attendance in your current voice channel, but only if you have a specific role
@@ -152,7 +153,7 @@ async def attendance(ctx):
         "values": [[timestamp], [channel], [attending]]
     }
     sheet_serv.spreadsheets().values().append(spreadsheetId=SHEET_ID, range=SHEET_RANGE, body=entry, valueInputOption="USER_ENTERED").execute()
-    sheet_link = discord.Embed(title="Attendance Spreadsheet Link", url=SHEET_URL, description="This link will take you to the attendence spreadsheet.", color=0x5894bf)
+    sheet_link = discord.Embed(title="Attendance Spreadsheet Link", url=SHEET_URL, description="This link will take you to the attendence spreadsheet.", color=COLOUR)
     await ctx.send("Attendance taken and appended to spreadsheet!")
     await ctx.send(embed=sheet_link)
 
@@ -179,7 +180,7 @@ async def schedule(ctx, mentions: str, start_date: str, start_time: str, end_dat
         }
     }
     entry = cal_serv.events().insert(calendarId=CAL_ID, body=entry).execute()
-    event_link = discord.Embed(title="Event Link", url=f"{entry.get('htmlLink')}", description="This link will take you to the event on the google calendar.", color=0x5894bf)
+    event_link = discord.Embed(title="Event Link", url=f"{entry.get('htmlLink')}", description="This link will take you to the event on the google calendar.", color=COLOUR)
     await ctx.send(f'Event "{event}" on {readable(start_date_time)} created!')
     await ctx.send(embed=event_link)
 
@@ -195,7 +196,7 @@ async def details(ctx, event: str):
         if cal_event['summary'] == event:
             found = True
             start = cal_event['start'].get('dateTime', cal_event['start'].get('date'))
-            event_link = discord.Embed(title="Event Link", url=f"{cal_event.get('htmlLink')}", description="This link will take you to the event on the google calendar.", color=0x5894bf)
+            event_link = discord.Embed(title="Event Link", url=f"{cal_event.get('htmlLink')}", description="This link will take you to the event on the google calendar.", color=COLOUR)
             await ctx.send(readable(start))
             await ctx.send(cal_event['summary'])
             await ctx.send(cal_event['description'])
@@ -248,7 +249,7 @@ async def cancel(ctx, date: str, time: str, event: str):
 @bot.command()
 async def calendar(ctx):
     '''Provides a link to the google calendar.'''
-    calendar_link = discord.Embed(title="Google Calendar Link", url=CAL_URL, description="This link will take you to our google calendar.", color=0x5894bf)
+    calendar_link = discord.Embed(title="Google Calendar Link", url=CAL_URL, description="This link will take you to our google calendar.", color=COLOUR)
     await ctx.send('Here is the link to our google calendar: ', embed=calendar_link)
 
 # Link to the attendance spreadsheet
@@ -256,7 +257,7 @@ async def calendar(ctx):
 @commands.has_any_role("Mentors", "Leads", "Team Captain", "Server Owner")
 async def spreadsheet(ctx):
     '''Provides a link to the attendance spreadsheet.'''
-    sheet_link = discord.Embed(title="Attendance Spreadsheet Link", url=SHEET_URL, description="This link will take you to the attendance spreadsheet.", color=0x5894bf)
+    sheet_link = discord.Embed(title="Attendance Spreadsheet Link", url=SHEET_URL, description="This link will take you to the attendance spreadsheet.", color=COLOUR)
     await ctx.send('Here is the link to our attendance spreadsheet: ', embed=sheet_link)
 
 # Run the bot
