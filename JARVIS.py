@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Imports
 from __future__ import print_function
 import discord
@@ -21,7 +23,7 @@ SHEET_RANGE = "Sheet1!A1:C10000"
 TZ = pytz.timezone('US/Eastern')
 CHECK_TIME = datetime.time(8, 30)
 GUILD_ID = 767850070229647401
-REMIND_CHANNEL_ID = 806741602457485362
+REMIND_CHANNEL_ID = 788037281553711124
 DAY = 1
 HOUR = datetime.timedelta(hours=1)
 COLOUR = 0x0d1d45
@@ -49,7 +51,7 @@ cal_serv = build('calendar', 'v3', credentials=creds)
 sheet_serv = build('sheets', 'v4', credentials=creds)
 
 # Discord Bot Steup
-description = '''Just A Rather Very Intelligent Discord Scheduling Bot built for FRC Team 5032, J.A.R.V.I.S. is at your service.'''
+description = '''Just A Rather Very Intelligent discord Scheduling bot built for FRC Team 5032, J.A.R.V.I.S. is at your service.'''
 intents = discord.Intents.default()
 intents.members = True
 help_command = commands.DefaultHelpCommand(no_category = 'Commands')
