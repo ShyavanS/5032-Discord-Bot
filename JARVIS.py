@@ -128,7 +128,7 @@ async def check_mentions():
             await channel.send(f"{event['summary']} event is in a day")
             await channel.send(embed=event_link)
 
-# Takes attendance in your current voice channel, bot only if you have a specific role
+# Takes attendance in your current voice channel, but only if you have a specific role
 @bot.command()
 @commands.has_any_role("Mentors", "Leads", "Team Captain", "Server Owner")
 async def attendance(ctx):
