@@ -117,12 +117,14 @@ async def check_mentions():
         except (IndexError, KeyError) as e:
             mentions = ""
         channel = bot.get_channel(REMIND_CHANNEL_ID)
+        event_link = discord.Embed(title="Event Link", url=f"{entry.get('htmlLink')}", description="This link will take you to the event on the google calendar.", color=0x5894bf)
         if start == now:
             await channel.send(mentions + f"{event['summary']} event is happenning now!")
         elif (start - now).seconds / 3600 == 1:
             await channel.send(mentions + f"{event['summary']} event is in an hour")
         elif (start - now).days == 1 and datetime.datetime.now(tz=TZ).time().replace(second=0, microsecond=0) == CHECK_TIME:
             await channel.send(f"{event['summary']} event is in a day")
+        await channel.send(embed=event_link)
 
 # Takes attendance in your current voice channel, bot only if you have a specific role
 @bot.command()
