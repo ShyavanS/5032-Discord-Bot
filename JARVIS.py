@@ -200,7 +200,11 @@ async def details(ctx, event: str):
             event_link = discord.Embed(title=f"{cal_event['summary']} Event Link", url=f"{cal_event.get('htmlLink')}", description=f"This link will take you to the {cal_event['summary']} event on the google calendar.", color=COLOUR)
             await ctx.send(readable(start))
             await ctx.send(cal_event['summary'])
-            await ctx.send(cal_event['description'])
+            try:
+                description = cal_event['description']
+                await ctx.send(description)
+            except KeyError:
+                pass
             await ctx.send(embed=event_link)
             break
     if found == False:
