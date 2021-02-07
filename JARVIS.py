@@ -255,7 +255,7 @@ async def calendar(ctx):
 @bot.command()
 @commands.has_any_role("Mentors", "Leads", "Team Captain", "Server Owner")
 async def spreadsheet(ctx):
-    '''Provides a link to the google calendar.'''
+    '''Provides a link to the attendance spreadsheet.'''
     sheet_link = discord.Embed(title="Attendance Spreadsheet Link", url=SHEET_URL, description="This link will take you to the attendance spreadsheet.", color=0x5894bf)
     await ctx.send('Here is the link to our attendance spreadsheet: ', embed=sheet_link)
 
