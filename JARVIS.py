@@ -16,10 +16,10 @@ from google.auth.transport.requests import Request
 # Constants
 SCOPES = ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.file']
 CAL_ID = 'classroom106157401548519906955@group.calendar.google.com'
-SHEET_ID = '1-nEtC8HnvX7G0NmsH2oryyVo8cVW7PfgQtfcOvlQMLE'
+# SHEET_ID = '1-nEtC8HnvX7G0NmsH2oryyVo8cVW7PfgQtfcOvlQMLE'
 CAL_URL = "https://calendar.google.com/calendar/u/0/r?cid=classroom106157401548519906955@group.calendar.google.com&pli=1"
-SHEET_URL = "https://docs.google.com/spreadsheets/d/1-nEtC8HnvX7G0NmsH2oryyVo8cVW7PfgQtfcOvlQMLE/edit?usp=sharing"
-SHEET_RANGE = "Sheet1!A1:C10000"
+# SHEET_URL = "https://docs.google.com/spreadsheets/d/1-nEtC8HnvX7G0NmsH2oryyVo8cVW7PfgQtfcOvlQMLE/edit?usp=sharing"
+# SHEET_RANGE = "Sheet1!A1:C10000"
 TZ = pytz.timezone('US/Eastern')
 CHECK_TIME = datetime.time(8, 30)
 GUILD_ID = 767850070229647401
@@ -134,30 +134,30 @@ async def check_mentions():
             await channel.send(embed=event_link)
 
 # Takes attendance in your current voice channel, but only if you have a specific role
-@bot.command()
-@commands.has_any_role("Mentors", "Leads", "Team Captain", "Server Owner")
-async def attendance(ctx):
-    '''Takes attendance in your current voice channel.'''
-    attending = []
-    try:
-        channel = str(ctx.author.voice.channel)
-        present = ctx.author.voice.channel.voice_states.keys()
-    except AttributeError:
-        await ctx.send("You are not currently in a voice channel that I can take attendance for. Please join one.")
-    for id in present:
-        user = bot.get_user(id)
-        attending.append(user.name)
-        timestamp = datetime.datetime.now(tz=TZ)
-        timestamp = datetime.datetime.strftime(timestamp, "%Y-%m-%d %I:%M %p")
-    attending = ' '.join(attending)
-    entry = {
-        "majorDimension": "COLUMNS",
-        "values": [[timestamp], [channel], [attending]]
-    }
-    sheet_serv.spreadsheets().values().append(spreadsheetId=SHEET_ID, range=SHEET_RANGE, body=entry, valueInputOption="USER_ENTERED").execute()
-    sheet_link = discord.Embed(title="Attendance Spreadsheet Link", url=SHEET_URL, description="This link will take you to the attendence spreadsheet.", color=COLOUR)
-    await ctx.send("Attendance taken and appended to spreadsheet!")
-    await ctx.send(embed=sheet_link)
+# @bot.command()
+# @commands.has_any_role("Mentors", "Leads", "Team Captain", "Server Owner")
+# async def attendance(ctx):
+#     '''Takes attendance in your current voice channel.'''
+#     attending = []
+#     try:
+#         channel = str(ctx.author.voice.channel)
+#         present = ctx.author.voice.channel.voice_states.keys()
+#     except AttributeError:
+#         await ctx.send("You are not currently in a voice channel that I can take attendance for. Please join one.")
+#     for id in present:
+#         user = bot.get_user(id)
+#         attending.append(user.name)
+#         timestamp = datetime.datetime.now(tz=TZ)
+#         timestamp = datetime.datetime.strftime(timestamp, "%Y-%m-%d %I:%M %p")
+#     attending = ' '.join(attending)
+#     entry = {
+#         "majorDimension": "COLUMNS",
+#         "values": [[timestamp], [channel], [attending]]
+#     }
+#     sheet_serv.spreadsheets().values().append(spreadsheetId=SHEET_ID, range=SHEET_RANGE, body=entry, valueInputOption="USER_ENTERED").execute()
+#     sheet_link = discord.Embed(title="Attendance Spreadsheet Link", url=SHEET_URL, description="This link will take you to the attendence spreadsheet.", color=COLOUR)
+#     await ctx.send("Attendance taken and appended to spreadsheet!")
+#     await ctx.send(embed=sheet_link)
 
 # Schedules a new event if you have a specific role, based on given data including roles to be reminded
 @bot.command(pass_context=True)
@@ -260,12 +260,12 @@ async def calendar(ctx):
     await ctx.send('Here is the link to our google calendar: ', embed=calendar_link)
 
 # Link to the attendance spreadsheet
-@bot.command()
-@commands.has_any_role("Mentors", "Leads", "Team Captain", "Server Owner")
-async def spreadsheet(ctx):
-    '''Provides a link to the attendance spreadsheet.'''
-    sheet_link = discord.Embed(title="Attendance Spreadsheet Link", url=SHEET_URL, description="This link will take you to the attendance spreadsheet.", color=COLOUR)
-    await ctx.send('Here is the link to our attendance spreadsheet: ', embed=sheet_link)
+# @bot.command()
+# @commands.has_any_role("Mentors", "Leads", "Team Captain", "Server Owner")
+# async def spreadsheet(ctx):
+#     '''Provides a link to the attendance spreadsheet.'''
+#     sheet_link = discord.Embed(title="Attendance Spreadsheet Link", url=SHEET_URL, description="This link will take you to the attendance spreadsheet.", color=COLOUR)
+#     await ctx.send('Here is the link to our attendance spreadsheet: ', embed=sheet_link)
 
 # Run the bot
 bot.run('ODA2NzM4NDY5MDM2NDkwNzYz.YBtzvw.mcvXcsVtG9XGUXw1ryzlWTIiIw8')
