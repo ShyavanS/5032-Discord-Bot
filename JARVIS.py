@@ -22,6 +22,8 @@ TZ = pytz.timezone('US/Eastern')
 CHECK_TIME = datetime.time(9, 0)
 GUILD_ID = 767850070229647401
 REMIND_CHANNEL_ID = 806741602457485362
+DAY = datetime.timedelta(days=1)
+HOUR = datetime.timedelta(hours=1)
 
 # Variables
 creds = None
@@ -121,10 +123,10 @@ async def check_mentions():
         if start == now:
             await channel.send(mentions + f"{event['summary']} event is happenning now!")
             await channel.send(embed=event_link)
-        elif (start - now).seconds / 3600 == 1:
+        elif (start - now) == HOUR:
             await channel.send(mentions + f"{event['summary']} event is in an hour")
             await channel.send(embed=event_link)
-        elif (start - now).days == 1 and datetime.datetime.now(tz=TZ).time().replace(second=0, microsecond=0) == CHECK_TIME:
+        elif (start - now) == DAY and datetime.datetime.now(tz=TZ).time().replace(second=0, microsecond=0) == CHECK_TIME:
             await channel.send(f"{event['summary']} event is in a day")
             await channel.send(embed=event_link)
 
@@ -151,7 +153,7 @@ async def attendance(ctx):
     }
     sheet_serv.spreadsheets().values().append(spreadsheetId=SHEET_ID, range=SHEET_RANGE, body=entry, valueInputOption="USER_ENTERED").execute()
     sheet_link = discord.Embed(title="Attendance Spreadsheet Link", url=SHEET_URL, description="This link will take you to the attendence spreadsheet.", color=0x5894bf)
-    await ctx.send("Attendance taken and apended to spreadsheet!")
+    await ctx.send("Attendance taken and appended to spreadsheet!")
     await ctx.send(embed=sheet_link)
 
 # Schedules a new event if you have a specific role, based on given data including roles to be reminded
@@ -252,10 +254,10 @@ async def calendar(ctx):
 # Link to the attendance spreadsheet
 @bot.command()
 @commands.has_any_role("Mentors", "Leads", "Team Captain", "Server Owner")
-async def attendence_link(ctx):
+async def attendance_link(ctx):
     '''Provides a link to the google calendar.'''
-    sheet_link = discord.Embed(title="Attendance Spreadsheet Link", url=SHEET_URL, description="This link will take you to the attendence spreadsheet.", color=0x5894bf)
-    await ctx.send('Here is the link to our google calendar: ', embed=sheet_link)
+    sheet_link = discord.Embed(title="Attendance Spreadsheet Link", url=SHEET_URL, description="This link will take you to the attendance spreadsheet.", color=0x5894bf)
+    await ctx.send('Here is the link to our attendance spreadsheet: ', embed=sheet_link)
 
 # Run the bot
 bot.run('ODA2NzM4NDY5MDM2NDkwNzYz.YBtzvw.mcvXcsVtG9XGUXw1ryzlWTIiIw8')
