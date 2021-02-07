@@ -21,7 +21,7 @@ SHEET_RANGE = "Sheet1!A1:C10000"
 TZ = pytz.timezone('US/Eastern')
 CHECK_TIME = datetime.time(9, 0)
 GUILD_ID = 767850070229647401
-REMIND_CHANNEL_ID = 788037281553711124
+REMIND_CHANNEL_ID = 806741602457485362
 
 # Variables
 creds = None
@@ -120,11 +120,13 @@ async def check_mentions():
         event_link = discord.Embed(title="Event Link", url=f"{event.get('htmlLink')}", description="This link will take you to the event on the google calendar.", color=0x5894bf)
         if start == now:
             await channel.send(mentions + f"{event['summary']} event is happenning now!")
+            await channel.send(embed=event_link)
         elif (start - now).seconds / 3600 == 1:
             await channel.send(mentions + f"{event['summary']} event is in an hour")
+            await channel.send(embed=event_link)
         elif (start - now).days == 1 and datetime.datetime.now(tz=TZ).time().replace(second=0, microsecond=0) == CHECK_TIME:
             await channel.send(f"{event['summary']} event is in a day")
-        await channel.send(embed=event_link)
+            await channel.send(embed=event_link)
 
 # Takes attendance in your current voice channel, bot only if you have a specific role
 @bot.command()
