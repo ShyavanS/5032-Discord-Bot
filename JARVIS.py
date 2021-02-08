@@ -22,8 +22,9 @@ CAL_URL = "https://calendar.google.com/calendar/u/0/r?cid=classroom1061574015485
 # SHEET_RANGE = "Sheet1!A1:C10000"
 TZ = pytz.timezone('US/Eastern')
 CHECK_TIME = datetime.time(8, 30)
-GUILD_ID = 767850070229647401
-REMIND_CHANNEL_ID = 788037281553711124
+GUILD_ID = ID
+REMIND_CHANNEL_ID = OTHERID
+NOW = datetime.timedelta(minutes=5)
 DAY = 1
 HOUR = datetime.timedelta(hours=1)
 COLOUR = 0x0d1d45
@@ -123,14 +124,14 @@ async def check_mentions():
             mentions = ""
         channel = bot.get_channel(REMIND_CHANNEL_ID)
         event_link = discord.Embed(title=f"{event['summary']} Event Link", url=f"{event.get('htmlLink')}", description=f"This link will take you to the {event['summary']} event on the google calendar.", color=COLOUR)
-        if start == now:
+        if (start - now) == NOW:
             await channel.send(mentions + f"{event['summary']} event is happenning now!")
             await channel.send(embed=event_link)
         elif (start - now) == HOUR:
             await channel.send(mentions + f"{event['summary']} event is in an hour.")
             await channel.send(embed=event_link)
         elif (start - now).days == DAY and datetime.datetime.now(tz=TZ).time().replace(second=0, microsecond=0) == CHECK_TIME:
-            await channel.send(f"{event['summary']} event is tomorrow at {readable(utc_start)}.")
+            await channel.send(mentions + f"{event['summary']} event is tomorrow at {readable(utc_start)}.")
             await channel.send(embed=event_link)
 
 # Takes attendance in your current voice channel, but only if you have a specific role
@@ -268,4 +269,4 @@ async def calendar(ctx):
 #     await ctx.send('Here is the link to our attendance spreadsheet: ', embed=sheet_link)
 
 # Run the bot
-bot.run("BOT_TOKEN")
+bot.run(KEY)
