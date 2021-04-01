@@ -8,26 +8,30 @@ import datetime
 import dateutil.parser as dp
 import pickle
 import pytz
-import os.path
+import os
+import sys
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+import lxml.html
 
 # Constants
+BOT_TOKEN = 'TOKEN'
 SCOPES = ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.file']
-CAL_ID = 'classroom106157401548519906955@group.calendar.google.com'
-# SHEET_ID = '1-nEtC8HnvX7G0NmsH2oryyVo8cVW7PfgQtfcOvlQMLE'
-CAL_URL = "https://calendar.google.com/calendar/u/0/r?cid=classroom106157401548519906955@group.calendar.google.com&pli=1"
-# SHEET_URL = "https://docs.google.com/spreadsheets/d/1-nEtC8HnvX7G0NmsH2oryyVo8cVW7PfgQtfcOvlQMLE/edit?usp=sharing"
+CAL_ID = 'CALENDAR_ID'
+# SHEET_ID = 'SHEET_ID'
+CAL_URL = "CALENDAR_URL"
+# SHEET_URL = "SHEET_URL"
 # SHEET_RANGE = "Sheet1!A1:C10000"
 TZ = pytz.timezone('US/Eastern')
 CHECK_TIME = datetime.time(8, 30)
-GUILD_ID = ID
-REMIND_CHANNEL_ID = OTHERID
+GUILD_ID = GUILD
+REMIND_CHANNEL_ID = CHANNEL
 NOW = datetime.timedelta(minutes=5)
 DAY = 1
 HOUR = datetime.timedelta(hours=1)
 COLOUR = 0x0d1d45
+BANNED = ["http", "https", "gif", "png", "jpg", "jpeg", "www.", "://", ".com", ".ca"]
 
 # Variables
 creds = None
@@ -57,6 +61,8 @@ intents = discord.Intents.default()
 intents.members = True
 help_command = commands.DefaultHelpCommand(no_category = 'Commands')
 bot = commands.Bot(command_prefix='J!', description=description, intents=intents, help_command=help_command)
+
+# Bot Functions
 
 # Converts UTC ISO datestring to EST Human Readable datestring
 def readable(date_time):
@@ -92,12 +98,16 @@ def spacify(string):
 def extract_mentions(description):
     global roles_ls
     mention_roles = ""
-    mentions = description.split('Mentions: ')[1]
+    mentions = description.split('Mentions:')[1]
     for role in roles_ls:
         role_str = str(role)
         if role_str in mentions:
+            if role_str == "Design" and "Game Design" in mentions or role_str == "Design" and "Badge Designer" in mentions:
+                continue
             mention_roles += role.mention
     return mention_roles
+
+# Events and Tasks
 
 # Initial bot setup
 @bot.event
@@ -114,9 +124,12 @@ async def check_mentions():
     events_ls = cal_serv.events().list(calendarId=CAL_ID, timeMin=utc_now, singleEvents=True, maxResults=10, orderBy='startTime').execute()
     for event in events_ls['items']:
         utc_start = event['start'].get('dateTime', event['start'].get('date'))
+        utc_end = event['end'].get('dateTime', event['start'].get('date'))
         start = readable(utc_start)
+        end = readable(utc_end)
         now = readable(utc_now)
         start = datetime.datetime.strptime(start, '%Y-%m-%d %I:%M %p')
+        end = datetime.datetime.strptime(end, '%Y-%m-%d %I:%M %p')
         now = datetime.datetime.strptime(now, '%Y-%m-%d %I:%M %p')
         try:
             mentions = extract_mentions(event['description'])
@@ -124,15 +137,28 @@ async def check_mentions():
             mentions = ""
         channel = bot.get_channel(REMIND_CHANNEL_ID)
         event_link = discord.Embed(title=f"{event['summary']} Event Link", url=f"{event.get('htmlLink')}", description=f"This link will take you to the {event['summary']} event on the google calendar.", color=COLOUR)
+        delete_time = (end - now).total_seconds()
         if (start - now) == NOW:
-            await channel.send(mentions + f"{event['summary']} event is happenning now!")
-            await channel.send(embed=event_link)
+            await channel.send(mentions + f" {event['summary']} event is happenning now!", delete_after=delete_time)
+            await channel.send(embed=event_link, delete_after=delete_time)
         elif (start - now) == HOUR:
-            await channel.send(mentions + f"{event['summary']} event is in an hour.")
-            await channel.send(embed=event_link)
+            await channel.send(mentions + f" {event['summary']} event is in an hour.", delete_after=delete_time)
+            await channel.send(embed=event_link, delete_after=delete_time)
         elif (start - now).days == DAY and datetime.datetime.now(tz=TZ).time().replace(second=0, microsecond=0) == CHECK_TIME:
-            await channel.send(mentions + f"{event['summary']} event is tomorrow at {readable(utc_start)}.")
-            await channel.send(embed=event_link)
+            await channel.send(mentions + f" {event['summary']} event is tomorrow at {readable(utc_start)}.", delete_after=delete_time)
+            await channel.send(embed=event_link, delete_after=delete_time)
+
+# Iron Man Reference
+@bot.event
+async def on_message(message):
+    if "J!" in message.content and any(i in message.content.lower() for i in BANNED):
+        await message.channel.send("Links are not permitted when entering commands.")
+        return
+    await bot.process_commands(message)
+    if "you up" in message.content.lower() and bot.user.mentioned_in(message):
+        await message.channel.send("For you sir, always.")
+
+# Bot Commands
 
 # Takes attendance in your current voice channel, but only if you have a specific role
 # @bot.command()
@@ -195,7 +221,7 @@ async def details(ctx, event: str):
     found = False
     page_token=None
     event = spacify(event)
-    events = cal_serv.events().list(calendarId=CAL_ID, timeMin=now).execute()
+    events = cal_serv.events().list(calendarId=CAL_ID, timeMin=now, singleEvents=True, orderBy='startTime').execute()
     for cal_event in events['items']:
         if cal_event['summary'] == event:
             found = True
@@ -204,19 +230,21 @@ async def details(ctx, event: str):
             await ctx.send(readable(start))
             await ctx.send(cal_event['summary'])
             try:
-                description = cal_event['description']
+                description = lxml.html.fromstring(cal_event['description']).text_content()
                 await ctx.send(description)
             except KeyError:
                 pass
             await ctx.send(embed=event_link)
             break
     if found == False:
-        await ctx.send(f'Event "{event}" was not found in the calendar. If you would like to add it, you can use the "S!schedule" command.')
+        await ctx.send(f'Event "{event}" was not found in the calendar. If you would like to add it, you can use the "S!schedule" command as long as you have the Lead, Mentor, Team Captain, or Server Owner roles.')
 
 # Lists the next n events
 @bot.command()
 async def ls(ctx, n: int):
-    '''Retrieves a list of n upcoming events'''
+    '''Retrieves a list of n upcoming events up to a maximum of 30.'''
+    if n > 30:
+        n = 30
     now = datetime.datetime.utcnow().isoformat() + 'Z'
     events_result = cal_serv.events().list(calendarId=CAL_ID, timeMin=now, maxResults=n, singleEvents=True, orderBy='startTime').execute()
     events = events_result.get('items', [])
@@ -260,6 +288,43 @@ async def calendar(ctx):
     calendar_link = discord.Embed(title="Google Calendar Link", url=CAL_URL, description="This link will take you to our google calendar.", color=COLOUR)
     await ctx.send('Here is the link to our google calendar: ', embed=calendar_link)
 
+# A manual failsafe in case the bot malfunctions that can be activated if you have the correct role
+@bot.command()
+@commands.has_any_role("Mentors", "Leads", "Team Captain", "Server Owner")
+async def reboot(ctx):
+    '''Reboots the bot script in the event something goes wrong.'''
+    os.execv(sys.executable, ['python'] + sys.argv)
+
+# Purges the current channel of any spam messages within the limits provided if you have the correct role
+@bot.command()
+@commands.has_any_role("Mentors", "Leads", "Team Captain", "Server Owner")
+async def despammify(ctx, limit: int, date: str, time: str):
+    '''Purges the current channel of spam.'''
+    date_time = datetime.datetime.strptime(unreadable(date, time), "%Y-%m-%dT%H:%M:%SZ")
+    
+    def check_message(message):
+        if ctx.message.mentions != []:
+            if message.author in ctx.message.mentions and message.created_at >= date_time:
+                return True
+            else:
+                return False
+        else:
+            if message.created_at >= date_time:
+                return True
+            else:
+                return False
+
+    def confirm(message):
+        if message.content == "y":
+            return True
+        else:
+            return False
+
+    await ctx.send("Are you sure you want to purge this channel of spam? [y/n]", delete_after=60)
+    msg = await bot.wait_for("message", check=confirm, timeout=60)
+    deleted = await ctx.channel.purge(limit=limit, check=check_message)
+    await ctx.send(f'Deleted {len(deleted)} message(s)', delete_after=60)
+
 # Link to the attendance spreadsheet
 # @bot.command()
 # @commands.has_any_role("Mentors", "Leads", "Team Captain", "Server Owner")
@@ -269,4 +334,4 @@ async def calendar(ctx):
 #     await ctx.send('Here is the link to our attendance spreadsheet: ', embed=sheet_link)
 
 # Run the bot
-bot.run(KEY)
+bot.run(BOT_TOKEN)
