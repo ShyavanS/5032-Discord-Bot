@@ -68,7 +68,6 @@ bot = commands.Bot(command_prefix='J!', description=description, intents=intents
 def readable(date_time):
     parsed = dp.parse(date_time)
     timestamp = parsed.timestamp()
-    timestamp = parsed.timestamp()
     local_stamp = datetime.datetime.fromtimestamp(timestamp, tz=TZ).strftime('%Y-%m-%d %I:%M %p')
     return local_stamp
 
@@ -259,12 +258,13 @@ async def ls(ctx, n: int):
 @commands.has_any_role("Mentors", "Leads", "Team Captain", "Server Owner")
 async def cancel(ctx, date: str, time: str, event: str):
     '''Cancels an existing event.'''
+    now = datetime.datetime.utcnow().isoformat() + 'Z'
     found = False
     date_time_search = unreadable(date, time)
     date_time_search = date_time_search.split("T")[0]
     page_token=None
     event = spacify(event)
-    events = cal_serv.events().list(calendarId=CAL_ID).execute()
+    events = cal_serv.events().list(calendarId=CAL_ID, timeMin=now, orderBy='startTime', singleEvents=True).execute()
     for cal_event in events['items']:
         if cal_event['summary'] == event:
             date_time = cal_event['start'].get('dateTime')
@@ -278,8 +278,9 @@ async def cancel(ctx, date: str, time: str, event: str):
                 break
     if found == False:
         await ctx.send(f'Event "{event}" on {date} was not found in the calendar. Please check your spelling and/or formatting.')
-    cal_serv.events().delete(calendarId=CAL_ID, eventId=event_id).execute()
-    await ctx.send(f'Event {event} on {date} canceled!')
+    else:
+        cal_serv.events().delete(calendarId=CAL_ID, eventId=event_id).execute()
+        await ctx.send(f'Event {event} on {date} canceled!')
 
 # Link to the goolge calendar
 @bot.command()
