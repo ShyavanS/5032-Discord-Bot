@@ -27,6 +27,7 @@ TZ = pytz.timezone('US/Eastern')
 CHECK_TIME = datetime.time(8, 30)
 GUILD_ID = GUILD
 REMIND_CHANNEL_ID = CHANNEL
+TESTING_CHANNEL_ID = CHANNEL2
 NOW = datetime.timedelta(minutes=5)
 DAY = 1
 HOUR = datetime.timedelta(hours=1)
@@ -111,10 +112,17 @@ def extract_mentions(description):
 # Initial bot setup
 @bot.event
 async def on_ready():
+    channel = bot.get_channel(TESTING_CHANNEL_ID)
+    grab_roles.start()
+    check_mentions.start()
+    await channel.send("We're online and ready.")
+
+# Retrieves list of roles from server
+@tasks.loop(seconds=60)
+async def grab_roles():
     global roles_ls
     guild = bot.get_guild(GUILD_ID)
     roles_ls = guild.roles
-    check_mentions.start()
 
 # Checks time between now and the next 10 events every minute to produce reminders for events
 @tasks.loop(seconds=60)
@@ -294,6 +302,7 @@ async def calendar(ctx):
 @commands.has_any_role("Mentors", "Leads", "Team Captain", "Server Owner")
 async def reboot(ctx):
     '''Reboots the bot script in the event something goes wrong.'''
+    await ctx.send('Rebooting...')
     os.execv(sys.executable, ['python'] + sys.argv)
 
 # Purges the current channel of any spam messages within the limits provided if you have the correct role
